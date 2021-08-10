@@ -245,3 +245,5 @@ Run the playbook
 ```sh
 ansible-playbook -i hosts site.yml
 ```
+
+### Add the client
