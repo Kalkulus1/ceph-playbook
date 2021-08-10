@@ -17,7 +17,7 @@ Client: client
 ## Manager configuration
 We need ssh-keys to be able to communicate with the servers.
 
-We can generate one or simply use what we generated from the console.
+We can `generate` one or simply use what we generated from the `console`.
 
 ### Console Keys
 AWS generated a key pair and gave us the private key but stored the public key on the servers, specifically in the location `~/.ssh/authorized_keys`
