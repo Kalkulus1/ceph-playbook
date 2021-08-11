@@ -1,0 +1,14 @@
+[mons]
+node-[1:5]
+
+[osds]
+node-[1:5]
+
+[mgrs]
+mgr
+
+[grafana-server]
+gfs
+
+[mgrs]
+mds

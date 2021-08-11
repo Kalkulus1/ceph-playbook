@@ -167,10 +167,10 @@ git checkout stable-5.0
 ```
 
 ```sh
-cp group_vars/mgrs.yml.example group_vars/mgrs.yml
-cp group_vars/mons.yml.example group_vars/mons.yml
-cp group_vars/all.yml.example group_vars/all.yml
-cp group_vars/osds.yml.example group_vars/osds.yml
+cp group_vars/mgrs.yml.sample group_vars/mgrs.yml
+cp group_vars/mons.yml.sample group_vars/mons.yml
+cp group_vars/all.yml.sample group_vars/all.yml
+cp group_vars/osds.yml.sample group_vars/osds.yml
 ```
 
 Copy the content of `osds.yml` and `all.yml` with what's in this repo. Make sure to configure your network address and other configurations
@@ -180,6 +180,10 @@ Copy the content of `osds.yml` and `all.yml` with what's in this repo. Make sure
 monitor_interface: eth0
 cluster_network: 172.31.0.0/16
 radosgw_interface: eth0
+
+dashboard_protocol: http
+dashboard_port: 8080
+
 ```
 
 ```yml
@@ -244,6 +248,21 @@ Run the playbook
 
 ```sh
 ansible-playbook -i hosts site.yml
+```
+
+When all is done, and works successfully with no errors, you can locate the dashboard running on the manager... 
+
+```sh
+http://mgr:8080
+```
+
+Replace mgr in the url with the public ip address of the monitor. eg. `http://34.56.78.345:8080`
+
+login with the username and password specified in the `all.yml` file...
+
+```sh
+admin
+p@ssw0rd
 ```
 
 ### Add the client

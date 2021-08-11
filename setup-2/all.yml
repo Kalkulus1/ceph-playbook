@@ -30,7 +30,6 @@ ceph_release_num: 15
 #  nautilus: 14
 #  octopus: 15
 #  pacific: 16
-#  quincy: 17
 #  dev: 99
 
 
@@ -56,7 +55,7 @@ client_group_name: clients
 iscsi_gw_group_name: iscsigws
 mgr_group_name: mgrs
 rgwloadbalancer_group_name: rgwloadbalancers
-monitoring_group_name: monitoring
+grafana_server_group_name: grafana-server
 
 # If configure_firewall is true, then ansible will try to configure the
 # appropriate firewalling rules so that Ceph daemons can communicate
@@ -94,10 +93,10 @@ monitoring_group_name: monitoring
 
 # Enable the ntp service by default to avoid clock skew on ceph nodes
 # Disable if an appropriate NTP client is already installed and configured
-ntp_service_enabled: true
+#ntp_service_enabled: true
 
 # Set type of NTP client daemon to use, valid entries are chronyd, ntpd or timesyncd
-ntp_daemon_type: chronyd
+#ntp_daemon_type: chronyd
 
 # This variable determines if ceph packages can be updated.  If False, the
 # package resources will use "state=present".  If True, they will use
@@ -110,7 +109,8 @@ ntp_daemon_type: chronyd
 ###########
 # INSTALL #
 ###########
-ceph_repository_type: cdn
+#ceph_repository_type: dummy
+
 # ORIGIN SOURCE
 #
 # Choose between:
@@ -139,13 +139,13 @@ ceph_repository: community
 #
 # Enabled when ceph_repository == 'community'
 #
-#ceph_mirror: https://download.ceph.com
+#ceph_mirror: http://download.ceph.com
 #ceph_stable_key: https://download.ceph.com/keys/release.asc
 ceph_stable_release: octopus
 #ceph_stable_repo: "{{ ceph_mirror }}/debian-{{ ceph_stable_release }}"
 
 #nfs_ganesha_stable: true # use stable repos for nfs-ganesha
-#nfs_ganesha_stable_branch: V3.5-stable
+#nfs_ganesha_stable_branch: V3.3-stable
 #nfs_ganesha_stable_deb_repo: "{{ ceph_mirror }}/nfs-ganesha/deb-{{ nfs_ganesha_stable_branch }}/{{ ceph_stable_release }}"
 
 
@@ -162,6 +162,12 @@ ceph_stable_release: octopus
 # This version is supported on RHEL 8
 #
 #ceph_rhcs_version: "{{ ceph_stable_rh_storage_version | default(5) }}"
+#valid_ceph_repository_type:
+#  - cdn
+#  - iso
+#ceph_rhcs_iso_path: "{{ ceph_stable_rh_storage_iso_path | default('') }}"
+#ceph_rhcs_mount_path: "{{ ceph_stable_rh_storage_mount_path | default('/tmp/rh-storage-mount') }}"
+#ceph_rhcs_repository_path: "{{ ceph_stable_rh_storage_repository_path | default('/tmp/rh-storage-repo') }}" # where to copy iso's content
 
 
 # REPOSITORY: UBUNTU CLOUD ARCHIVE
@@ -367,13 +373,20 @@ cluster_network: 172.31.0.0/16
 
 ## Rados Gateway options
 #
-#radosgw_frontend_type: beast # For additional frontends see: https://docs.ceph.com/en/latest/radosgw/frontends/
+#radosgw_frontend_type: beast # For additional frontends see: https://docs.ceph.com/en/octopus/radosgw/frontends/
 
-#radosgw_frontend_port: 8080
+#radosgw_civetweb_port: 8080
+#radosgw_civetweb_num_threads: 512
+#radosgw_civetweb_options: "num_threads={{ radosgw_civetweb_num_threads }}"
+# For additional civetweb configuration options available such as logging,
+# keepalive, and timeout settings, please see the civetweb docs at
+# https://github.com/civetweb/civetweb/blob/master/docs/UserManual.md
+
+#radosgw_frontend_port: "{{ radosgw_civetweb_port if radosgw_frontend_type == 'civetweb' else '8080' }}"
 # The server private key, public certificate and any other CA or intermediate certificates should be in one file, in PEM format.
 #radosgw_frontend_ssl_certificate: ""
 #radosgw_frontend_ssl_certificate_data: "" # certificate contents to be written to path defined by radosgw_frontend_ssl_certificate
-#radosgw_frontend_options: ""
+#radosgw_frontend_options: "{{ radosgw_civetweb_options if radosgw_frontend_type == 'civetweb' else '' }}"
 #radosgw_thread_pool_size: 512
 
 
@@ -381,7 +394,7 @@ cluster_network: 172.31.0.0/16
 # These variables must be defined at least in all.yml and overrided if needed (inventory host file or group_vars/*.yml).
 # Eg. If you want to specify for each radosgw node which address the radosgw will bind to you can set it in your **inventory host file** by using 'radosgw_address' variable.
 # Preference will go to radosgw_address if both radosgw_address and radosgw_interface are defined.
-radosgw_interface: eth0
+#radosgw_interface: interface
 #radosgw_address: x.x.x.x
 #radosgw_address_block: subnet
 #radosgw_keystone_ssl: false # activate this when using keystone PKI keys
@@ -446,14 +459,9 @@ radosgw_interface: eth0
 ###############
 # NFS-GANESHA #
 ###############
-#
-# Access type options
-#
-# Enable NFS File access
-# If set to true, then ganesha is set up to export the root of the
-# Ceph filesystem, and ganesha's attribute and directory caching is disabled
-# as much as possible since libcephfs clients also caches the same
-# information.
+
+# Confiure the type of NFS gatway access.  At least one must be enabled for an
+# NFS role to be useful
 #
 # Set this to true to enable File access via NFS.  Requires an MDS role.
 #nfs_file_gw: false
@@ -473,7 +481,7 @@ radosgw_interface: eth0
 #
 # If multiple realms or multiple zonegroups or multiple zones need to be created on a cluster then,
 # the multisite config variables should be editted in their respective zone .yaml file and realm .yaml file.
-# See README-MULTISITE.md for more information.
+# See README-MULTISITE-MULTIREALM.md for more information.
 
 # The following Multi-site related variables should be set by the user.
 #
@@ -544,7 +552,7 @@ radosgw_interface: eth0
 # DOCKER #
 ##########
 #ceph_docker_image: "ceph/daemon"
-#ceph_docker_image_tag: latest-master
+#ceph_docker_image_tag: latest-octopus
 #ceph_docker_registry: docker.io
 #ceph_docker_registry_auth: false
 #ceph_docker_registry_username:
@@ -556,6 +564,8 @@ radosgw_interface: eth0
 #ceph_client_docker_image: "{{ ceph_docker_image }}"
 #ceph_client_docker_image_tag: "{{ ceph_docker_image_tag }}"
 #ceph_client_docker_registry: "{{ ceph_docker_registry }}"
+#ceph_docker_enable_centos_extra_repo: false
+#ceph_docker_on_openstack: false
 #containerized_deployment: False
 #container_binary:
 #timeout_command: "{{ 'timeout --foreground -s KILL ' ~ docker_pull_timeout if (docker_pull_timeout != '0') and (ceph_docker_dev_image is undefined or not ceph_docker_dev_image) else '' }}"
@@ -638,14 +648,14 @@ dashboard_enabled: True
 # For https, you should set dashboard.crt/key and grafana.crt/key
 # If you define the dashboard_crt and dashboard_key variables, but leave them as '',
 # then we will autogenerate a cert and keyfile
-dashboard_protocol: http
-dashboard_port: 8080
+#dashboard_protocol: https
+#dashboard_port: 8443
 # set this variable to the network you want the dashboard to listen on. (Default to public_network)
 #dashboard_network: "{{ public_network }}"
 dashboard_admin_user: admin
 #dashboard_admin_user_ro: false
 # This variable must be set with a strong custom password when dashboard_enabled is True
-dashboard_admin_password: p@ssw0rd
+dashboard_admin_password: Ghas34sYTew24nmdfaf76
 # We only need this for SSL (https) connections
 #dashboard_crt: ''
 #dashboard_key: ''
@@ -662,13 +672,13 @@ dashboard_admin_password: p@ssw0rd
 #node_exporter_port: 9100
 grafana_admin_user: admin
 # This variable must be set with a strong custom password when dashboard_enabled is True
-grafana_admin_password: p@ssw0rd
+grafana_admin_password: Ghas34sYTew24nmdfaf76
 # We only need this for SSL (https) connections
 #grafana_crt: ''
 #grafana_key: ''
 # When using https, please fill with a hostname for which grafana_crt is valid.
 #grafana_server_fqdn: ''
-#grafana_container_image: "docker.io/grafana/grafana:6.7.4"
+#grafana_container_image: "docker.io/grafana/grafana:5.4.3"
 #grafana_container_cpu_period: 100000
 #grafana_container_cpu_cores: 2
 # container_memory is in GB
@@ -676,7 +686,7 @@ grafana_admin_password: p@ssw0rd
 #grafana_uid: 472
 #grafana_datasource: Dashboard
 #grafana_dashboards_path: "/etc/grafana/dashboards/ceph-dashboard"
-#grafana_dashboard_version: master
+#grafana_dashboard_version: octopus
 #grafana_dashboard_files:
 #  - ceph-cluster.json
 #  - cephfs-overview.json

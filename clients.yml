@@ -45,5 +45,5 @@ pools:
 # - { name: client.test, key: "AQAin8tUMICVFBAALRHNrV0Z4MXupRw4v9JQ6Q==" ...
 
 keys:
-  - { name: client.test, key: "AQABjxJhAAAAABAAh3d8Ybmhk8fMON78vQhztA==", caps: { mon: "profile rbd", osd: "allow class-read object_prefix rbd_children, profile rbd pool=test" },  mode: "{{ ceph_keyring_permissions }}" }
-  - { name: client.test2, key: "AQABjxJhAAAAABAAh3d8Ybmhk8fMON78vQhztA==", caps: { mon: "profile rbd", osd: "allow class-read object_prefix rbd_children, profile rbd pool=test2" },  mode: "{{ ceph_keyring_permissions }}" }
+  - { name: client.test, key: "AQBvDhNhAAAAABAAVWB+i+4aSP5BaBCxIYr5tg==", caps: { mon: "profile rbd", osd: "allow class-read object_prefix rbd_children, profile rbd pool=test" },  mode: "{{ ceph_keyring_permissions }}" }
+  - { name: client.test2, key: "AQBvDhNhAAAAABAAVWB+i+4aSP5BaBCxIYr5tg==", caps: { mon: "profile rbd", osd: "allow class-read object_prefix rbd_children, profile rbd pool=test2" },  mode: "{{ ceph_keyring_permissions }}" }
