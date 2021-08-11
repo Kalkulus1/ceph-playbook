@@ -181,7 +181,7 @@ monitor_interface: eth0
 cluster_network: 172.31.0.0/16
 radosgw_interface: eth0
 
-dashboard_protocol: http
+dashboard_protocol: https
 dashboard_port: 8080
 
 ```

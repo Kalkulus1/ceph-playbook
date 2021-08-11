@@ -638,7 +638,7 @@ dashboard_enabled: True
 # For https, you should set dashboard.crt/key and grafana.crt/key
 # If you define the dashboard_crt and dashboard_key variables, but leave them as '',
 # then we will autogenerate a cert and keyfile
-dashboard_protocol: http
+dashboard_protocol: https
 dashboard_port: 8080
 # set this variable to the network you want the dashboard to listen on. (Default to public_network)
 #dashboard_network: "{{ public_network }}"
