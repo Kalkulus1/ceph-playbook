@@ -250,6 +250,28 @@ Run the playbook
 ansible-playbook -i hosts site.yml
 ```
 
+### Dashboard
+
+Login to the mon from your mgr
+
+```sh
+ssh mon
+```
+
+Verify the dashboard url
+
+```sh
+sudo ceph mgr services
+```
+
+Output
+```json
+{
+    "dashboard": "https://mgr:8080/",
+    "prometheus": "http://mgr:9283/"
+}
+```
+
 When all is done, and works successfully with no errors, you can locate the dashboard running on the manager... 
 
 ```sh
