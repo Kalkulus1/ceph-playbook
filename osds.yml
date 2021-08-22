@@ -34,8 +34,11 @@ copy_admin_key: true
 # Note: This scenario uses the ceph-volume lvm batch method to provision OSDs
 
 devices:
-  - /dev/xvdb
   - /dev/xvda
+  - /dev/xvdb
+  - /dev/xvdc
+  - /dev/xvdd
+  - /dev/xvde
 #  - /dev/sdb
 #  - /dev/sdc
 #  - /dev/sdd

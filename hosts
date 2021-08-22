@@ -25,3 +25,6 @@ osd3
 
 [grafana-server]
 gfs
+
+[clients]
+client

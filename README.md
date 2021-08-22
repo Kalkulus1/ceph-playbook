@@ -1,4 +1,4 @@
-# A ceph playbook
+# Setup 1: Using Ceph Ansible
 
 ## Current Setup
 
@@ -119,31 +119,7 @@ ssh client
 exit
 ```
 
-Copy below and add to /etc/hosts of mon, osd1, osd2, osd3, mds and gfs
-
-```sh
-172.31.23.65 mgr
-172.31.24.49 mon
-172.31.21.226 osd1
-172.31.23.115 osd2
-172.31.18.39 osd3
-172.31.23.73 gfs
-172.31.20.221 mds
-```
-
 Specify the right IP addresses
-
-Try to establish connection between servers
-
-### Add the key-pair to mon, osd1, osd2, osd3, mds and gfs
-```sh
-scp /home/ubuntu/.ssh/* ubuntu@mon:/home/ubuntu/.ssh/.
-scp /home/ubuntu/.ssh/* ubuntu@osd1:/home/ubuntu/.ssh/.
-scp /home/ubuntu/.ssh/* ubuntu@osd2:/home/ubuntu/.ssh/.
-scp /home/ubuntu/.ssh/* ubuntu@osd3:/home/ubuntu/.ssh/.
-scp /home/ubuntu/.ssh/* ubuntu@mds:/home/ubuntu/.ssh/.
-scp /home/ubuntu/.ssh/* ubuntu@gfs:/home/ubuntu/.ssh/.
-```
 
 You are seeing ubuntu because ubuntu is my username on all the servers.
 
@@ -235,7 +211,7 @@ gfs
 Get the site.yml file
 
 ```sh
-cp site.yml site.yml.example
+cp site.yml.sample site.yml
 ```
 
 Install some dependies
@@ -285,6 +261,16 @@ login with the username and password specified in the `all.yml` file...
 ```sh
 admin
 p@ssw0rd
+```
+
+
+#### Orchestrator
+
+```sh
+ssh mon
+sudo ceph mgr module enable test_orchestrator
+sudo ceph orch set backend test_orchestrator
+sudo ceph orch status
 ```
 
 ### Add the client
