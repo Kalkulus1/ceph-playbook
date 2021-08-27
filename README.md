@@ -2,10 +2,19 @@
 
 ## Current Setup
 
-Spin up 8 instances with the appropriate rules
+Spin up 9 instances with the appropriate rules using AWS Console
+
+```
+AMI: Ubuntu Server 18.04 LTS (HVM), SSD Volume Type
+Instance Type: t2.medium
+Instance Details: For learning purpose, set number of instances to 9
+Add Storage: For learning sake, add more volumes and set the sizes to 50GB (Sandbox limit)
+Security Group: SSH, ICMP, TCP 8080, TCP 9283 (For learning sake, I allowed All Traffic so I dont have to worry about the ports to open)
+```
 
 Name the instances
 ```
+Admin: admin
 Managers: mgr
 Monitors: mon
 OSDs: osd1, osd2, osd3
@@ -14,10 +23,10 @@ Grafana Server: gfs
 Client: client
 ```
 
-## Manager configuration
+## Admin configuration
 We need ssh-keys to be able to communicate with the servers.
 
-We can `generate` one or simply use what we generated from the `console`.
+We can `generate` one or simply use what we generated from the `AWS console`.
 
 ### Console Keys
 AWS generated a key pair and gave us the private key but stored the public key on the servers, specifically in the location `~/.ssh/authorized_keys`
@@ -68,7 +77,7 @@ AX4VbAe1afSzMmU1TF1RJspffsR8S357l3KCyXYFJbrbw5LHVPyomQ==
 -----END RSA PRIVATE KEY-----
 ```
 
-Head onto the manager
+Head onto the admin
 
 ```sh
 nano ~/.ssh/id_rsa
@@ -82,7 +91,7 @@ Change the file permissions
 chmod 400 ~/.ssh/id_rsa
 ```
 
-The next thing is to add all hosts to the managers host file
+The next thing is to add all hosts to the admin host file
 
 ```sh
 sudo nano /etc/hosts
@@ -98,11 +107,13 @@ sudo nano /etc/hosts
 172.31.18.1 client
 ```
 
-Get your right ip address for each server
+Get the right ip address for each server
 
 Try to connect to servers
 
 ```sh
+ssh mgr
+exit
 ssh mon
 exit
 ssh osd1
@@ -119,20 +130,30 @@ ssh client
 exit
 ```
 
-Specify the right IP addresses
-
 You are seeing ubuntu because ubuntu is my username on all the servers.
 
-## Ceph Configuration on the manager (mgr)
+### Ceph Configuration setup on the admin
 
-Let's first install ansible.
+Let's first install ansible. Ansible would help us automate the installation and configuration of ceph on all our nodes.
 
+Add the package repository
 ```sh
 sudo add-apt-repository ppa:ansible/ansible
-sudo apt update
-sudo apt install ansible
 ```
 
+Install ansible now:
+
+```sh
+sudo apt update
+sudo apt install ansible -y
+```
+
+Install another dependency package
+```sh
+sudo apt install python-netaddr -y
+```
+
+### Adding configuration files
 Clone the ceph ansible repo
 
 ```sh
@@ -142,39 +163,41 @@ cd ceph-ansible
 git checkout stable-5.0
 ```
 
+Copy and paste the content of the following files. Read all YML files
+
 ```sh
-cp group_vars/mgrs.yml.sample group_vars/mgrs.yml
-cp group_vars/mons.yml.sample group_vars/mons.yml
-cp group_vars/all.yml.sample group_vars/all.yml
-cp group_vars/osds.yml.sample group_vars/osds.yml
+nano group_vars/all.yml
+nano group_vars/clients.yml
+nano group_vars/mdss.yml
+nano group_vars/mgrs.yml
+nano group_vars/mons.yml
+nano group_vars/osds.yml
 ```
 
-Copy the content of `osds.yml` and `all.yml` with what's in this repo. Make sure to configure your network address and other configurations
-
-```yml
-#all.yml
-monitor_interface: eth0
-cluster_network: 172.31.0.0/16
-radosgw_interface: eth0
-
-dashboard_protocol: https
-dashboard_port: 8080
-
-```
-
+For the `osds.yml`, take not of the devices added:
 ```yml
 #osds.yml
 devices:
-  - /dev/xvdb
   - /dev/xvda
+  - /dev/xvdb
+  - /dev/xvdc
+  - /dev/xvdd
+  - /dev/xvde
 #  - /dev/sdb
 #  - /dev/sdc
 #  - /dev/sdd
 #  - /dev/sde
 ```
 
-Let's create create a host file in ceph-ansible
+For the `all.yml` file, take note of the ff:
+```yml
+#all.yml
+monitor_interface: eth0
+cluster_network: 172.31.0.0/16
+radosgw_interface: eth0
+```
 
+Get the lists of hosts
 ```sh
 nano hosts
 ```
@@ -188,6 +211,9 @@ ansible_ssh_user=ubuntu
 ansible_become=true
 ansible_become_method=sudo
 ansible_become_user=root
+
+[mgrs]
+mgr
 
 [mons]
 mon
@@ -206,18 +232,56 @@ osd3
 [grafana-server]
 gfs
 
+[clients]
+client
+```
+
+Let's ping all the hosts using ansible:
+
+```sh
+ansible all -m ping -i hosts
+```
+
+Output:
+```sh
+client | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+mon | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+osd2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+mds | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+gfs | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+mgr | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+osd3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+osd1 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
 ```
 
 Get the site.yml file
 
 ```sh
 cp site.yml.sample site.yml
-```
-
-Install some dependies
-
-```sh
-sudo apt install python-netaddr
 ```
 
 Run the playbook
@@ -228,7 +292,7 @@ ansible-playbook -i hosts site.yml
 
 ### Dashboard
 
-Login to the mon from your mgr
+Login to the mon from your admin
 
 ```sh
 ssh mon
@@ -265,6 +329,7 @@ p@ssw0rd
 
 
 #### Orchestrator
+Enabling the orchestrator will allow have other functionalities on the dashboard. 
 
 ```sh
 ssh mon
@@ -272,5 +337,3 @@ sudo ceph mgr module enable test_orchestrator
 sudo ceph orch set backend test_orchestrator
 sudo ceph orch status
 ```
-
-### Add the client

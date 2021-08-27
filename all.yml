@@ -513,8 +513,9 @@ radosgw_interface: eth0
 # The following sections are supported: [global], [mon], [osd], [mds], [client]
 #
 # Example:
-# ceph_conf_overrides:
-#   global:
+ceph_conf_overrides:
+  global:
+    osd_pool_default_pg_num: 32
 #     foo: 1234
 #     bar: 5678
 #   "client.rgw.{{ hostvars[groups.get(rgw_group_name)[0]]['ansible_facts']['hostname'] }}":
